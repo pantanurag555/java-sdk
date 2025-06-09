@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,6 +27,7 @@ import io.modelcontextprotocol.spec.McpSchema.CreateMessageRequest;
 import io.modelcontextprotocol.spec.McpSchema.CreateMessageResult;
 import io.modelcontextprotocol.spec.McpSchema.GetPromptRequest;
 import io.modelcontextprotocol.spec.McpSchema.GetPromptResult;
+import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
 import io.modelcontextprotocol.spec.McpSchema.ListPromptsResult;
 import io.modelcontextprotocol.spec.McpSchema.LoggingLevel;
 import io.modelcontextprotocol.spec.McpSchema.LoggingMessageNotification;
@@ -130,7 +132,7 @@ public class McpAsyncClient {
 	/**
 	 * Cached tool output schemas.
 	 */
-	private final ConcurrentHashMap<String, McpSchema.JsonSchema> toolsOutputSchemaCache;
+	private final ConcurrentHashMap<String, Optional<JsonSchema>> toolsOutputSchemaCache;
 
 	/**
 	 * Roots define the boundaries of where servers can operate within the filesystem,
@@ -301,7 +303,7 @@ public class McpAsyncClient {
 	 * Get the cached tool output schemas.
 	 * @return The cached tool output schemas
 	 */
-	public HashMap<String, McpSchema.JsonSchema> getToolsOutputSchemaCache() {
+	public ConcurrentHashMap<String, Optional<JsonSchema>> getToolsOutputSchemaCache() {
 		return this.toolsOutputSchemaCache;
 	}
 
@@ -579,7 +581,8 @@ public class McpAsyncClient {
 					if (result.tools() != null) {
 						// Cache tools output schema
 						result.tools()
-							.forEach(tool -> this.toolsOutputSchemaCache.put(tool.name(), tool.outputSchema()));
+							.forEach(tool -> this.toolsOutputSchemaCache.put(tool.name(),
+									Optional.ofNullable(tool.outputSchema())));
 					}
 				});
 		});

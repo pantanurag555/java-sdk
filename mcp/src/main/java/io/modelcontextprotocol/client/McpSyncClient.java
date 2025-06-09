@@ -5,8 +5,9 @@
 package io.modelcontextprotocol.client;
 
 import java.time.Duration;
-import java.util.HashMap;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -244,18 +245,19 @@ public class McpSyncClient implements AutoCloseable {
 	 */
 	public McpSchema.CallToolResult callTool(McpSchema.CallToolRequest callToolRequest) {
 		McpSchema.CallToolResult result = this.delegate.callTool(callToolRequest).block();
-		HashMap<String, McpSchema.JsonSchema> toolsOutputSchemaCache = this.delegate.getToolsOutputSchemaCache();
+		ConcurrentHashMap<String, Optional<McpSchema.JsonSchema>> toolsOutputSchemaCache = this.delegate
+			.getToolsOutputSchemaCache();
 		// Should not be triggered but added for completeness
 		if (!toolsOutputSchemaCache.containsKey(callToolRequest.name())) {
 			throw new McpError("Tool with name '" + callToolRequest.name() + "' not found");
 		}
-		if (result != null && toolsOutputSchemaCache.get(callToolRequest.name()) != null) {
+		Optional<McpSchema.JsonSchema> optOutputSchema = toolsOutputSchemaCache.get(callToolRequest.name());
+		if (result != null && optOutputSchema != null && optOutputSchema.isPresent()) {
 			if (result.structuredContent() == null) {
 				throw new McpError("CallToolResult validation failed: structuredContent is null and "
 						+ "does not match tool outputSchema.");
 			}
-
-			McpSchema.JsonSchema outputSchema = toolsOutputSchemaCache.get(callToolRequest.name());
+			McpSchema.JsonSchema outputSchema = optOutputSchema.get();
 
 			try {
 				// Convert outputSchema to string
@@ -284,9 +286,9 @@ public class McpSyncClient implements AutoCloseable {
 				}
 			}
 			catch (JsonProcessingException e) {
-				// Log error if output schema can't be parsed to prevent erroring out for
-				// successful call tool request
-				logger.error("Encountered exception when parsing outputSchema: {}", e);
+				// Log warning if output schema can't be parsed to prevent erroring out
+				// for successful call tool request
+				logger.warn("Failed to validate CallToolResult: Error parsing tool outputSchema: {}", e);
 			}
 		}
 		return result;
