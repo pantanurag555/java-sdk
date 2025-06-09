@@ -68,8 +68,6 @@ public class McpSyncClient implements AutoCloseable {
 
 	private static final Logger logger = LoggerFactory.getLogger(McpSyncClient.class);
 
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
 	// TODO: Consider providing a client config to set this properly
 	// this is currently a concern only because AutoCloseable is used - perhaps it
 	// is not a requirement?
@@ -77,14 +75,28 @@ public class McpSyncClient implements AutoCloseable {
 
 	private final McpAsyncClient delegate;
 
+	/** JSON object mapper for message serialization/deserialization */
+	protected ObjectMapper objectMapper;
+
 	/**
 	 * Create a new McpSyncClient with the given delegate.
 	 * @param delegate the asynchronous kernel on top of which this synchronous client
 	 * provides a blocking API.
 	 */
 	McpSyncClient(McpAsyncClient delegate) {
+		this(delegate, new ObjectMapper());
+	}
+
+	/**
+	 * Create a new McpSyncClient with the given delegate.
+	 * @param delegate the asynchronous kernel on top of which this synchronous client
+	 * provides a blocking API.
+	 * @param objectMapper the object mapper for JSON serialization/deserialization
+	 */
+	McpSyncClient(McpAsyncClient delegate, ObjectMapper objectMapper) {
 		Assert.notNull(delegate, "The delegate can not be null");
 		this.delegate = delegate;
+		this.objectMapper = objectMapper;
 	}
 
 	/**
@@ -247,10 +259,10 @@ public class McpSyncClient implements AutoCloseable {
 
 			try {
 				// Convert outputSchema to string
-				String outputSchemaString = OBJECT_MAPPER.writeValueAsString(outputSchema);
+				String outputSchemaString = this.objectMapper.writeValueAsString(outputSchema);
 
 				// Create JsonSchema validator
-				ObjectNode schemaNode = (ObjectNode) OBJECT_MAPPER.readTree(outputSchemaString);
+				ObjectNode schemaNode = (ObjectNode) this.objectMapper.readTree(outputSchemaString);
 				// Set additional properties to false if not specified in output schema
 				if (!schemaNode.has("additionalProperties")) {
 					schemaNode.put("additionalProperties", false);
@@ -259,7 +271,7 @@ public class McpSyncClient implements AutoCloseable {
 					.getSchema(schemaNode);
 
 				// Convert structured content in reult to JsonNode
-				JsonNode jsonNode = OBJECT_MAPPER.valueToTree(result.structuredContent());
+				JsonNode jsonNode = this.objectMapper.valueToTree(result.structuredContent());
 
 				// Validate outputSchema against structuredContent
 				Set<ValidationMessage> validationResult = schema.validate(jsonNode);
@@ -413,10 +425,6 @@ public class McpSyncClient implements AutoCloseable {
 	 */
 	public McpSchema.CompleteResult completeCompletion(McpSchema.CompleteRequest completeRequest) {
 		return this.delegate.completeCompletion(completeRequest).block();
-	}
-
-	private void isStrict(boolean b) {
-		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 }

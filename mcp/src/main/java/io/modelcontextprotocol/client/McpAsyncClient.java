@@ -130,7 +130,7 @@ public class McpAsyncClient {
 	/**
 	 * Cached tool output schemas.
 	 */
-	private final HashMap<String, McpSchema.JsonSchema> toolsOutputSchemaCache;
+	private final ConcurrentHashMap<String, McpSchema.JsonSchema> toolsOutputSchemaCache;
 
 	/**
 	 * Roots define the boundaries of where servers can operate within the filesystem,
@@ -180,7 +180,7 @@ public class McpAsyncClient {
 		this.transport = transport;
 		this.roots = new ConcurrentHashMap<>(features.roots());
 		this.initializationTimeout = initializationTimeout;
-		this.toolsOutputSchemaCache = new HashMap<>();
+		this.toolsOutputSchemaCache = new ConcurrentHashMap<>();
 
 		// Request Handlers
 		Map<String, RequestHandler<?>> requestHandlers = new HashMap<>();
