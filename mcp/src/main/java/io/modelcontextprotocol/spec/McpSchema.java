@@ -1841,6 +1841,8 @@ public final class McpSchema {
 			@JsonSubTypes.Type(value = ResourceLink.class, name = "resource_link") })
 	public sealed interface Content permits TextContent, ImageContent, AudioContent, EmbeddedResource, ResourceLink {
 
+		Map<String, Object> meta();
+
 		default String type() {
 			if (this instanceof TextContent) {
 				return "text";
@@ -2014,7 +2016,13 @@ public final class McpSchema {
                 @JsonProperty("description") String description,
                 @JsonProperty("mimeType") String mimeType,
                 @JsonProperty("size") Long size,
-                @JsonProperty("annotations") Annotations annotations) implements Annotated, Content, ResourceContent { // @formatter:on
+                @JsonProperty("annotations") Annotations annotations,
+				@JsonProperty("_meta") Map<String, Object> meta) implements Annotated, Content, ResourceContent { // @formatter:on
+
+		public ResourceLink(String name, String uri, String description, String mimeType, Long size,
+				Annotations annotations) {
+			this(name, uri, description, mimeType, size, annotations, null);
+		}
 
 		public static Builder builder() {
 			return new Builder();
@@ -2033,6 +2041,8 @@ public final class McpSchema {
 			private Annotations annotations;
 
 			private Long size;
+
+			private Map<String, Object> meta;
 
 			public Builder name(String name) {
 				this.name = name;
@@ -2064,11 +2074,16 @@ public final class McpSchema {
 				return this;
 			}
 
+			public Builder meta(Map<String, Object> meta) {
+				this.meta = meta;
+				return this;
+			}
+
 			public ResourceLink build() {
 				Assert.hasText(uri, "uri must not be empty");
 				Assert.hasText(name, "name must not be empty");
 
-				return new ResourceLink(name, uri, description, mimeType, size, annotations);
+				return new ResourceLink(name, uri, description, mimeType, size, annotations, meta);
 			}
 
 		}

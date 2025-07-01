@@ -215,7 +215,7 @@ public class McpSchemaTests {
 	@Test
 	void testResourceLink() throws Exception {
 		McpSchema.ResourceLink resourceLink = new McpSchema.ResourceLink("main.rs", "file:///project/src/main.rs",
-				"Primary application entry point", "text/x-rust", null, null);
+				"Primary application entry point", "text/x-rust", null, null, Map.of("metaKey", "metaValue"));
 		String value = mapper.writeValueAsString(resourceLink);
 
 		assertThatJson(value).when(Option.IGNORING_ARRAY_ORDER)
@@ -223,14 +223,14 @@ public class McpSchemaTests {
 			.isObject()
 			.isEqualTo(
 					json("""
-							{"type":"resource_link","name":"main.rs","uri":"file:///project/src/main.rs","description":"Primary application entry point","mimeType":"text/x-rust"}"""));
+							{"type":"resource_link","name":"main.rs","uri":"file:///project/src/main.rs","description":"Primary application entry point","mimeType":"text/x-rust","_meta":{"metaKey":"metaValue"}}"""));
 	}
 
 	@Test
 	void testResourceLinkDeserialization() throws Exception {
 		McpSchema.ResourceLink resourceLink = mapper.readValue(
 				"""
-						{"type":"resource_link","name":"main.rs","uri":"file:///project/src/main.rs","description":"Primary application entry point","mimeType":"text/x-rust"}""",
+						{"type":"resource_link","name":"main.rs","uri":"file:///project/src/main.rs","description":"Primary application entry point","mimeType":"text/x-rust","_meta":{"metaKey":"metaValue"}}""",
 				McpSchema.ResourceLink.class);
 		assertThat(resourceLink).isNotNull();
 		assertThat(resourceLink.type()).isEqualTo("resource_link");
@@ -238,6 +238,7 @@ public class McpSchemaTests {
 		assertThat(resourceLink.uri()).isEqualTo("file:///project/src/main.rs");
 		assertThat(resourceLink.description()).isEqualTo("Primary application entry point");
 		assertThat(resourceLink.mimeType()).isEqualTo("text/x-rust");
+		assertThat(resourceLink.meta()).containsEntry("metaKey", "metaValue");
 	}
 
 	// JSON-RPC Message Types Tests
@@ -1366,7 +1367,7 @@ public class McpSchemaTests {
 			.isObject()
 			.isEqualTo(
 					json("""
-							{"progressToken":"progress-token-123","progress":0.5,"total":1.0,"message":"Processing file 1 of 2"},"_meta":{"key":"value"}"""));
+							{"progressToken":"progress-token-123","progress":0.5,"total":1.0,"message":"Processing file 1 of 2","_meta":{"key":"value"}}"""));
 	}
 
 	@Test
